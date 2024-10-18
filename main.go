@@ -25,3 +25,12 @@ type backend struct {
 	connections int
 	reverseProxy *httputil.ReverseProxy
 }
+
+//Serverpool
+//serverpool interface
+type ServerPool interface {
+	GetBackends() []Backend
+	GetNextValidPeer() backend
+	AddBackend(Backend)
+	GetServerPoolSize() int
+}
