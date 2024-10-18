@@ -8,17 +8,8 @@ import (
 )
 
 //Backend
-//backend interface
-type Backend interface{
-	SetAlive(bool)
-	IsAlive() bool
-	GetUrl() *url.URL
-	GetActiveConnections() int
-	Serve(http.ResponseWriter, *http.Request)
-}
-
 //backend struct
-type backend struct {
+type Backend struct {
 	url *url.URL
 	alive bool
 	mux sync.RWMutex
@@ -27,10 +18,9 @@ type backend struct {
 }
 
 //Serverpool
-//serverpool interface
-type ServerPool interface {
-	GetBackends() []Backend
-	GetNextValidPeer() backend
-	AddBackend(Backend)
-	GetServerPoolSize() int
+//serverpool struct
+type ServerPool struct{
+	backends []Backend
+	mux sync.RWMutex
+	current int
 }
