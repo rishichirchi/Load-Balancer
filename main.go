@@ -46,3 +46,17 @@ func (s *ServerPool) GetNextPeer() *Backend{
 
 	return nil
 }
+
+func (backend *Backend) SetAlive(alive bool){
+	backend.mux.Lock()
+	backend.alive = alive
+	backend.mux.UnLock()
+}
+
+func (backend *Backend) IsAlive() (alive bool){
+	backend.mux.RLock()
+	alive = backend.alive
+	backend.mux.RUnlock()
+
+	return
+}
