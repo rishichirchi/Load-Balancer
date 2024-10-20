@@ -6,8 +6,13 @@ import (
 	"net/url"
 	"sync"
 	"sync/atomic"
+	"context"
 )
 
+const (
+	Attempts int = iota
+	Retry
+)
 //backend struct
 type Backend struct {
 	url *url.URL
@@ -20,8 +25,7 @@ type Backend struct {
 //serverpool struct
 type ServerPool struct{
 	backends []Backend
-	mux sync.RWMutex
-	current int
+	current uint64
 }
 
 func (s *ServerPool) NextIndex() int{
@@ -50,7 +54,7 @@ func (s *ServerPool) GetNextPeer() *Backend{
 func (backend *Backend) SetAlive(alive bool){
 	backend.mux.Lock()
 	backend.alive = alive
-	backend.mux.UnLock()
+	backend.mux.Unlock()
 }
 
 func (backend *Backend) IsAlive() (alive bool){
@@ -59,4 +63,11 @@ func (backend *Backend) IsAlive() (alive bool){
 	backend.mux.RUnlock()
 
 	return
+}
+
+func GetRetryFromContext(r *http.Request) int{
+	if retry, ok := r.Context().Value(Retry).(int); ok{
+		return retry
+	}
+	return 0
 }
