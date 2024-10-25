@@ -31,6 +31,8 @@ type ServerPool struct{
 	current uint64
 }
 
+var serverpool ServerPool
+
 func (s *ServerPool) NextIndex() int{
 	return int(atomic.AddUint64(&s.current, uint64(1)) % uint64(len(s.backends)))
 }
@@ -68,6 +70,13 @@ func (backend *Backend) IsAlive() (alive bool){
 	return
 }
 
+func GetAttemptsFromContext(r *http.Request) int{
+	if attempts, ok := r.Context().Value(Attempts).(int); ok{
+		return attempts
+	}
+	return 1
+}
+
 func GetRetryFromContext(r *http.Request) int{
 	if retry, ok := r.Context().Value(Retry).(int); ok{
 		return retry
@@ -99,4 +108,17 @@ func isBackendAlive(url *url.URL) bool{
 	defer conn.Close()
 
 	return true
+}
+
+func healthCheck(){
+	t := time.NewTicker(time.Minute * 2)
+
+	for{
+		select{
+		case <- t.C: 
+			log.Println("Starting health check...")
+			serverpool.HealthCheck()
+			log.Println("Health check completed")
+		}
+	}
 }
