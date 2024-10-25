@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
 	"sync/atomic"
-	"context"
+	"time"
 )
 
 const (
@@ -70,4 +73,30 @@ func GetRetryFromContext(r *http.Request) int{
 		return retry
 	}
 	return 0
+}
+
+func (s *ServerPool) HealthCheck(){
+	for _, b := range s.backends{
+		status := "up"
+		alive := isBackendAlive(b.url)
+		b.SetAlive(alive)
+
+		if !alive{
+			status = "down"
+		}
+
+		log.Printf("%s [%s]\n", b.url, status)
+	}
+}
+
+func isBackendAlive(url *url.URL) bool{
+	timeout := 2 * time.Second
+	conn, err := net.DialTimeout("tcp", url.Host, timeout)
+	if err != nil{
+		log.Println("Site unreachable, error: ", err)
+		return false
+	}
+	defer conn.Close()
+
+	return true
 }
